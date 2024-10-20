@@ -3,35 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solaris Weather App</title>
+    <title>Kid-Friendly Weather App</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
             background-color: #87CEEB;
             color: #FFFFFF;
+            font-family: 'Arial', sans-serif;
             text-align: center;
             padding: 20px;
         }
         h1 {
-            color: #FF6347;
+            color: #FFD700;
         }
-        button {
-            background-color: #FFD700;
-            border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        button:hover {
-            background-color: #FFA500;
+        .weather-info {
+            background-color: #4682B4;
+            padding: 20px;
+            border-radius: 10px;
+            display: inline-block;
         }
     </style>
 </head>
 <body>
-    <h1>Welcome to the Kid-Friendly Weather App!</h1>
-    <button id="getLocation">Get My Location</button>
-    <div id="weatherInfo"></div>
+    <h1>Welcome to the Weather App!</h1>
+    <button id="getLocation">Allow Location</button>
+    <div class="weather-info" id="weatherInfo"></div>
 
     <script>
         document.getElementById('getLocation').addEventListener('click', function() {
@@ -45,18 +40,24 @@
         function showWeather(position) {
             const lat = position.coords.latitude;
             const lon = position.coords.longitude;
-            const apiKey = 'YOUR_API_KEY'; // Replace with your OpenWeatherMap API key
-            const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+            const apiKey = 'YOUR_API_KEY';
+            const apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
 
-            fetch(url)
+            fetch(apiUrl)
                 .then(response => response.json())
                 .then(data => {
+                    const windSpeed = data.wind.speed;
                     const weatherDescription = data.weather[0].description;
-                    const temperature = data.main.temp;
+                    const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString();
+                    const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString();
+                    const weatherEmoji = weatherDescription.includes('sun') ? '☀️' : '🌥️';
+
                     document.getElementById('weatherInfo').innerHTML = `
                         <h2>Current Weather</h2>
-                        <p>Temperature: ${temperature}°C</p>
-                        <p>Description: ${weatherDescription}</p>
+                        <p>Wind Speed: ${windSpeed} m/s</p>
+                        <p>Weather: ${weatherEmoji} ${weatherDescription}</p>
+                        <p>Sunrise: ${sunrise}</p>
+                        <p>Sunset: ${sunset}</p>
                     `;
                 })
                 .catch(error => {
