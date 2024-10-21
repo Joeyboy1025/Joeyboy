@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather and Planetary Temperatures</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        #tabs {
+            display: flex;
+            justify-content: center;
+            background-color: #f1f1f1;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        .tab {
+            margin: 0 10px;
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #e7e7e7;
+            border-radius: 5px;
+        }
+        .tab:hover {
+            background-color: #d1d1d1;
+        }
+        .content {
+            padding: 20px;
+            margin-bottom: 50px; /* Space for tabs */
+        }
+    </style>
+</head>
+<body>
+
+<div class="content" id="weatherContent">
+    <h1>Current Weather</h1>
+    <p>Weather information will be displayed here.</p>
+</div>
+
+<div class="content" id="historyContent" style="display:none;">
+    <h1>Weather History</h1>
+    <p>Learn about the history of weather here.</p>
+</div>
+
+<div class="content" id="planetContent" style="display:none;">
+    <h1>Planetary Temperatures</h1>
+    <p>View temperatures from different planets here.</p>
+</div>
+
+<div id="tabs">
+    <div class="tab" onclick="showContent('weather')">Weather</div>
+    <div class="tab" onclick="showContent('history')">History</div>
+    <div class="tab" onclick="showContent('planet')">Planets</div>
+</div>
+
+<script>
+    function showContent(tab) {
+        document.getElementById('weatherContent').style.display = 'none';
+        document.getElementById('historyContent').style.display = 'none';
+        document.getElementById('planetContent').style.display = 'none';
+
+        if (tab === 'weather') {
+            document.getElementById('weatherContent').style.display = 'block';
+        } else if (tab === 'history') {
+            document.getElementById('historyContent').style.display = 'block';
+        } else if (tab === 'planet') {
+            document.getElementById('planetContent').style.display = 'block';
+        }
+    }
+</script>
+
+</body>
+</html>
