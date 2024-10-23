@@ -5,14 +5,89 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>School Chat App</title>
     <style>
-        body { font-family: Arial, sans-serif; }
-        #login, #profile, #chat { display: none; }
+        body { 
+            font-family: Arial, sans-serif; 
+            background: linear-gradient(to right, #6a11cb, #2575fc); 
+            color: white; 
+            margin: 0; 
+            padding: 20px; 
+        }
+        h2 { 
+            text-align: center; 
+            margin-bottom: 20px; 
+        }
+        #logo { 
+            text-align: center; 
+            font-size: 2em; 
+            margin-bottom: 20px; 
+        }
+        #login, #profile, #chat { 
+            display: none; 
+            background: rgba(255, 255, 255, 0.1); 
+            border-radius: 10px; 
+            padding: 20px; 
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
         #chat { margin-top: 20px; }
-        .message { border: 1px solid #ccc; padding: 5px; margin: 5px 0; }
-        #messages { height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; }
+        .message { 
+            background: rgba(255, 255, 255, 0.2); 
+            border: 1px solid #fff; 
+            padding: 10px; 
+            margin: 5px 0; 
+            border-radius: 5px; 
+            display: flex; 
+            align-items: center; 
+        }
+        #messages { 
+            height: 200px; 
+            overflow-y: auto; 
+            border: 1px solid #fff; 
+            padding: 5px; 
+            border-radius: 5px; 
+        }
+        input[type="text"], input[type="password"], textarea { 
+            width: 100%; 
+            padding: 10px; 
+            margin-top: 10px; 
+            border: none; 
+            border-radius: 5px; 
+        }
+        button { 
+            background: #2575fc; 
+            color: white; 
+            border: none; 
+            padding: 10px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            margin-top: 10px; 
+            width: 100%; 
+        }
+        button:hover { 
+            background: #6a11cb; 
+        }
+        #canvas {
+            display: none; 
+            max-width: 100%; 
+            border: 1px solid white; 
+            margin-top: 10px; 
+        }
+        #emojiPicker {
+            display: none; 
+            position: absolute; 
+            background: white; 
+            border-radius: 5px; 
+            padding: 5px; 
+            z-index: 1000; 
+        }
+        .emoji { 
+            cursor: pointer; 
+            font-size: 20px; 
+        }
     </style>
 </head>
 <body>
+
+<div id="logo">Fluxion</div>
 
 <div id="login">
     <h2>Login</h2>
@@ -23,7 +98,14 @@
 <div id="profile">
     <h2>Create Profile</h2>
     <input type="text" id="username" placeholder="Username">
-    <input type="file" id="profilePicture" accept="image/*">
+    <input type="password" id="userPassword" placeholder="Create a password">
+    <button onclick="togglePasswordVisibility('userPassword')">Show/Hide</button>
+    <input type="file" id="profilePicture" accept="image/*" onchange="previewProfilePicture()">
+    
+    <canvas id="canvas"></canvas>
+    <button id="cropButton" onclick="cropImage()" style="display: none;">Crop Image</button>
+    <img id="profilePicPreview" src="" alt="Profile Picture Preview" style="display:none;">
+    
     <textarea id="bio" placeholder="Tell us about yourself"></textarea>
     <button onclick="createProfile()">Create Profile</button>
 </div>
@@ -32,12 +114,40 @@
     <h2>Chat Room</h2>
     <div id="messages"></div>
     <input type="text" id="messageInput" placeholder="Type a message">
+    <input type="file" id="messageImage" accept="image/*" onchange="sendImage()">
+    <button onclick="toggleEmojiPicker()">😊</button>
     <button onclick="sendMessage()">Send</button>
+    
+    <div id="emojiPicker">
+        <span class="emoji" onclick="addEmoji('😀')">😀</span>
+        <span class="emoji" onclick="addEmoji('😁')">😁</span>
+        <span class="emoji" onclick="addEmoji('😂')">😂</span>
+        <span class="emoji" onclick="addEmoji('😍')">😍</span>
+        <span class="emoji" onclick="addEmoji('😢')">😢</span>
+        <span class="emoji" onclick="addEmoji('😎')">😎</span>
+        <span class="emoji" onclick="addEmoji('🥳')">🥳</span>
+        <span class="emoji" onclick="addEmoji('🤔')">🤔</span>
+        <span class="emoji" onclick="addEmoji('👍')">👍</span>
+        <span class="emoji" onclick="addEmoji('👋')">👋</span>
+        <span class="emoji" onclick="addEmoji('🤗')">🤗</span>
+        <span class="emoji" onclick="addEmoji('🙌')">🙌</span>
+        <span class="emoji" onclick="addEmoji('👏')">👏</span>
+        <span class="emoji" onclick="addEmoji('💔')">💔</span>
+        <span class="emoji" onclick="addEmoji('✨')">✨</span>
+        <span class="emoji" onclick="addEmoji('🔥')">🔥</span>
+        <span class="emoji" onclick="addEmoji('🌈')">🌈</span>
+        <span class="emoji" onclick="addEmoji('🎉')">🎉</span>
+        <span class="emoji" onclick="addEmoji('😇')">😇</span>
+        <span class="emoji" onclick="addEmoji('🥰')">🥰</span>
+        <span class="emoji" onclick="addEmoji('😜')">😜</span>
+        <span class="emoji" onclick="addEmoji('🤩')">🤩</span>
+    </div>
 </div>
 
 <script>
-    let username = '';
-    const messagesContainer = document.getElementById('messages');
+    const users = [];
+    let currentUser = null;
+    let canvas, ctx, image;
 
     function checkPassword() {
         const password = document.getElementById('password').value;
@@ -49,18 +159,69 @@
         }
     }
 
-    function createProfile() {
-        username = document.getElementById('username').value;
-        const bio = document.getElementById('bio').value;
-        const profilePicture = document.getElementById('profilePicture').files[0];
+    function togglePasswordVisibility(inputId) {
+        const input = document.getElementById(inputId);
+        input.type = input.type === 'password' ? 'text' : 'password';
+    }
 
-        if (username) {
+    function previewProfilePicture() {
+        const file = document.getElementById('profilePicture').files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            image = new Image();
+            image.onload = function() {
+                canvas = document.getElementById('canvas');
+                canvas.width = 200;
+                canvas.height = 200;
+                ctx = canvas.getContext('2d');
+                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                canvas.style.display = 'block';
+                document.getElementById('cropButton').style.display = 'block';
+            };
+            image.src = e.target.result;
+        };
+
+        if (file) {
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function cropImage() {
+        const croppedImage = canvas.toDataURL('image/png');
+        const imgElement = document.getElementById('profilePicPreview');
+        imgElement.src = croppedImage;
+        imgElement.style.display = 'block';
+        document.getElementById('cropButton').style.display = 'none';
+        canvas.style.display = 'none';
+    }
+
+    function createProfile() {
+        const username = document.getElementById('username').value;
+        const userPassword = document.getElementById('userPassword').value;
+        const bio = document.getElementById('bio').value;
+
+        if (username && userPassword) {
+            currentUser = { username, bio, profilePicture: image.src, userPassword };
+            users.push(currentUser);
+
             document.getElementById('profile').style.display = 'none';
             document.getElementById('chat').style.display = 'block';
             displayMessage(`Welcome, ${username}!`);
         } else {
-            alert('Please enter a username.');
+            alert('Please fill out all fields.');
         }
+    }
+
+    function toggleEmojiPicker() {
+        const picker = document.getElementById('emojiPicker');
+        picker.style.display = picker.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function addEmoji(emoji) {
+        const messageInput = document.getElementById('messageInput');
+        messageInput.value += emoji;
+        toggleEmojiPicker();
     }
 
     function sendMessage() {
@@ -68,17 +229,31 @@
         const messageText = messageInput.value;
 
         if (messageText) {
-            displayMessage(`${username}: ${messageText}`);
+            displayMessage(`${currentUser.username}: ${messageText}`);
             messageInput.value = '';
+        }
+    }
+
+    function sendImage() {
+        const imageInput = document.getElementById('messageImage');
+        const file = imageInput.files[0];
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                displayMessage(`${currentUser.username}: <img src="${e.target.result}" style="max-width: 100px;"/>`);
+                imageInput.value = ''; // Clear input after sending
+            };
+            reader.readAsDataURL(file);
         }
     }
 
     function displayMessage(message) {
         const messageElement = document.createElement('div');
         messageElement.className = 'message';
-        messageElement.textContent = message;
-        messagesContainer.appendChild(messageElement);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight; // Scroll to the bottom
+        messageElement.innerHTML = message; // Allow HTML for images
+        document.getElementById('messages').appendChild(messageElement);
+        document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight; // Scroll to the bottom
     }
 
     // Start with the login screen
